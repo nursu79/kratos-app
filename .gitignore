@@ -23,3 +23,6 @@ build/
 # OS files
 .DS_Store
 Thumbs.db
+TESTING_MATRIX.md
+USER_GUIDE.md
+
