@@ -11,6 +11,7 @@ body {
   background: #111D13;
   color: #F1F7F1;
   overflow: hidden;
+  font-size: 16px;
 }
 
 .react-flow__node {

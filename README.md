@@ -1,105 +1,84 @@
 # Kratos: Quantale-Backed Zero-Trust Token Mint
 
-A full-stack web application simulating an automated cloud infrastructure pipeline where API tokens are dynamically combined and delegated using a custom **Residuated Quantale Algebraic Engine** built from scratch.
+A professional, full-stack demonstration of **Residuated Quantale Algebraic Engines** applied to zero-trust security architecture. This project models API rate limit delegation as a mathematical lattice optimization problem.
 
-## Architecture
+---
 
-```
-kratos-app/
-├── backend/
-│   ├── main.py              # FastAPI server (API endpoints)
-│   ├── quantale_core.py     # 8-stage quantale engine (importable)
-│   └── requirements.txt     # Python dependencies
-├── frontend/
-│   ├── src/
-│   │   ├── main.jsx         # React entry point
-│   │   ├── App.jsx          # Main React component (React Flow canvas)
-│   │   └── index.css        # Forest Dark theme styles
-│   ├── index.html           # HTML entry
-│   ├── package.json         # Node dependencies
-│   └── vite.config.js       # Vite config with API proxy
-└── README.md                # This file
-```
+## Technical Domain: API Rate Limit Tiers
 
-## Domain: API Rate Limit Tiers
+In this domain, we move beyond simple "pass/fail" permissions. We treat security as a **measurable resource** (throughput) that can be combined, compared, and delegated.
 
-| Tier | Requests/sec | Description |
-|------|-------------|-------------|
-| `blocked` | 0 | No requests allowed |
-| `limited` | 10 | Minimal access (health checks) |
-| `standard` | 100 | Normal production traffic |
-| `elevated` | 1000 | High-throughput batch ops |
-| `unlimited` | ∞ | No rate limit (internal) |
+### 1. The Lattice ($Q, \le$)
+We define a finite chain of service tiers:
+`blocked < limited < standard < elevated < unlimited`
 
-**⊗ = meet (min)** — Combining tiers gives the more restrictive one (policy intersection)
+- **Interpretation**: If $a \le b$, then $b$ is a "superior" permission (more throughput) than $a$.
+- **Join ($\bigvee$)**: Combining multiple roles (e.g., User has Role A and Role B) results in the **Least Upper Bound**—the best available tier.
 
-**Unit = `unlimited`** — Top element, identity for min
+### 2. The Monoid ($Q, \otimes, e$)
+- **Operation ($\otimes$)**: We use the **Meet/Min** operation.
+- **Meaning**: This models **Policy Intersection** in a service pipeline. If a request passes through a "Standard" gateway but the target microservice is "Limited," the effective rate limit of the whole pipeline is **Limited** (the weakest link).
+- **Identity ($e$)**: `unlimited` acts as the identity, as it does not restrict any pipeline it is added to.
 
-**Residual (→)** — Given gateway tier `a` and budget cap `c`, max tier safely delegable
+### 3. The Right Residual ($\to$) — Safe Delegation
+The right residual answers the critical security question:
+> "Given I have permission level **$a$**, and the child process I'm launching has a budget cap of **$c$**, what is the maximum permission **$b$** I can safely delegate?"
+
+**Mathematical Adjunction**: $a \otimes b \le c \iff b \le a \to c$
+
+---
 
 ## Quick Start
 
-### Backend
+### 1. Requirements
+- Python 3.10+
+- Node.js 18+
+
+### 2. Run the Application
+
+First, install the backend dependencies:
 ```bash
-# Recommendation: use the root entry point for submission compliance
-python app.py  
+pip install -r backend/requirements.txt
 ```
 
-Alternatively, from the backend folder:
+Then, launch the backend from the root:
 ```bash
-cd backend
-pip install -r requirements.txt
-python main.py
+python3 app.py
 ```
 
-### Frontend
+Then, in another terminal:
 ```bash
 cd frontend
 npm install
 npm run dev
-# Client runs on http://localhost:3000
 ```
 
-## API Endpoints
+---
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/quantale/state` | GET | Full quantale state + matrices |
-| `/api/security/evaluate-role` | POST | Lattice Join (⋁) on role array |
-| `/api/security/compose-pipeline` | POST | Monoid product (⊗) on service chain |
-| `/api/security/calculate-delegation` | POST | Right residual (a→c) for delegation |
-| `/api/security/verify-adjunction` | GET | Full Galois adjunction verification |
-| `/api/security/verify-distributivity` | GET | Full distributivity verification |
+## 8-Stage Implementation Hierarchy
+This project builds the algebraic engine from first principles in `backend/quantale_core.py`:
 
-## 8-Stage Quantale Hierarchy
+1. **FiniteSet** — Universe of rate limits.
+2. **BinaryRelation** — Reflexive-transitive closure for ordered pairs.
+3. **Poset** — Validating the partial order properties.
+4. **Lattice** — Computing joins and meets.
+5. **CompleteLattice** — Handling arbitrary subsets and $\top/\bot$.
+6. **Monoid** — Associativity and identity for $\otimes$.
+7. **Quantale** — Verifying the distributivity axiom.
+8. **Residuals** — Implementing the Galois Adjunction.
 
-1. **FiniteSet** — Membership in $Q = \{\text{blocked}, \text{limited}, \text{standard}, \text{elevated}, \text{unlimited}\}$
-2. **BinaryRelation** — Ordered pairs $Q \times Q$
-3. **Poset** — Reflexive, antisymmetric, transitive $\le$
-4. **Lattice** — Join ($\bigvee$) and Meet ($\bigwedge$) for every pair
-5. **CompleteLattice** — Arbitrary joins/meets, $\bot=\text{blocked}$, $\top=\text{unlimited}$
-6. **Monoid** — Associative $\otimes$ with identity `unlimited`
-7. **Quantale** — Distributivity: $a \otimes (b \vee c) = (a \otimes b) \vee (a \otimes c)$
-8. **Residuals** — Right residual $a \to c = \max \{b \mid a \otimes b \le c\}$ with Galois adjunction
+---
 
-## Sample Output
+## Sample Output & Interpretation
 
-When running the application, the backend provides algebraic evaluation logs. For example:
+The application GUI (React Flow) provides live algebraic evaluations:
 
-**1. Lattice Join (Effective Permission)**
-- Input: `['limited', 'standard']`
-- Result: `standard`
-- Interpretation: User gets the best available tier.
+| Scenario | Logic | Result | Meaning |
+| :--- | :--- | :--- | :--- |
+| **Combined Keys** | `standard ∨ limited` | `standard` | User gets the higher tier of their two roles. |
+| **Service Chain** | `elevated ⊗ limited` | `limited` | The pipeline performance is capped by the most restrictive tier. |
+| **Delegation** | `elevated → standard` | `standard` | An elevated service can safely give "standard" to a child without overshooting. |
+| **Delegation** | `limited → elevated` | `unlimited` | Since the parent is already more restrictive than the budget, any delegated tier is "safe." |
 
-**2. Monoid Product (Pipeline Composition)**
-- Input: `['elevated', 'limited']`
-- Result: `limited`
-- Interpretation: The pipeline is constrained by its weakest link.
-
-**3. Right Residual (Safe Delegation)**
-- Input: `parent='elevated', budget='standard'`
-- Result: `standard`
-- Interpretation: Max delegatable tier that won't exceed budget.
-
-## Theme
-Forest Dark / Carbon Black premium engineering dashboard.
+---
+**Developed for Quantale Training Submission**
