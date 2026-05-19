@@ -1,0 +1,25 @@
+# Node dependencies
+node_modules/
+.npm
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+
+# Notebooks
+.ipynb_checkpoints
+
+# Build/Dist
+dist/
+build/
+.vite/
+
+# OS files
+.DS_Store
+Thumbs.db
